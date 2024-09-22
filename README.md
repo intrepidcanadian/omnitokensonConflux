@@ -4,13 +4,6 @@
 This repository leverages the Omnichain Fungible Token (OFT) Example and creates a repo to deploy an ERC20 token that can be transferred between Conflux eSpace (testnet) and Ethereum (Sepolia).
 
 
-
-<p align="center">
-  <a href="https://layerzero.network">
-    <img alt="LayerZero" style="width: 400px" src="https://docs.layerzero.network/img/LayerZero_Logo_White.svg"/>
-  </a>
-</p>
-
 <p align="center">
   <a href="https://layerzero.network" style="color: #a77dff">Homepage</a> | <a href="https://docs.layerzero.network/" style="color: #a77dff">Docs</a> | <a href="https://layerzero.network/developers" style="color: #a77dff">Developers</a>
 </p>
