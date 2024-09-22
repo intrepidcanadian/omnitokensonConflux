@@ -1,0 +1,134 @@
+/* src/TokenTransfer.css */
+.container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    background-color: #f0f0f0;
+  }
+  
+  .title {
+    margin-bottom: 20px;
+    font-size: 2rem;
+    color: #333;
+  }
+  
+  .network-section {
+    display: flex;
+    align-items: center;
+    justify-content: center; /* Center the network boxes */
+    margin-bottom: 20px;
+    position: relative;
+  }
+  
+  .network-box {
+    width: 120px;
+    height: 120px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: #ffffff;
+    border: 2px solid #e0e0e0;
+    border-radius: 10px;
+    box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
+    position: relative;
+  }
+  
+  .network-label {
+    font-size: 14px;
+    font-weight: bold;
+    text-align: center;
+  }
+  
+  .connector {
+    width: 200px; /* Width of the bridge between the boxes */
+    height: 6px; /* Height of the connector */
+    display: flex;
+    align-items: center;
+    position: relative;
+    overflow: hidden; /* Hide overflow */
+    margin: 0 10px; /* Space between network boxes and connector */
+    background-color: transparent; /* Transparent background */
+  }
+  
+  .line {
+    width: 100px;
+    height: 4px;
+    background-color: #007bff;
+    margin-right: 10px; /* Space between lines */
+    border-radius: 2px;
+    animation: move-horizontal 5s infinite linear;
+  }
+  
+  .right .line {
+    animation-direction: normal; 
+  }
+  
+  .left .line {
+    animation-direction: reverse; 
+  }
+  
+  @keyframes move-horizontal {
+    0% {
+      transform: translateX(-100%);
+    }
+    100% {
+      transform: translateX(100%);
+    }
+  }
+  
+  .card {
+    width: 400px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+    padding: 20px;
+  }
+  
+  .card-content {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .select-chain {
+    margin-bottom: 10px;
+  }
+  
+  .transfer-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 10px;
+    cursor: pointer;
+    border-radius: 5px;
+    font-size: 16px;
+    transition: background-color 0.3s ease;
+  }
+  
+  .transfer-button:hover {
+    background-color: #0056b3;
+  }
+  
+  .circle-container {
+    width: 300px; 
+    height: 300px; 
+    border-radius: 50%;
+    background-color: #f8f9fa;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1); 
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 2rem auto; 
+  }
+  
+  .circle-content {
+    text-align: center;
+    padding: 1rem;
+  }
+  
+  .token-info-item {
+    margin: 0.5rem 0; 
+    font-size: 1.1rem;
+    color: #333; 
+  }
