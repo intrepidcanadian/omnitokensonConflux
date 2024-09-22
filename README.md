@@ -1,3 +1,10 @@
+
+<h1 align="center">ETH Global 2024 Singapore </h1>
+
+This repository leverages the Omnichain Fungible Token (OFT) Example and creates a repo to deploy an ERC20 token that can be transferred between Conflux eSpace (testnet) and Ethereum (Sepolia).
+
+
+
 <p align="center">
   <a href="https://layerzero.network">
     <img alt="LayerZero" style="width: 400px" src="https://docs.layerzero.network/img/LayerZero_Logo_White.svg"/>
