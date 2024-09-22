@@ -3,6 +3,14 @@
 
 This repository leverages the Omnichain Fungible Token (OFT) Example and creates a repo to deploy an ERC20 token that can be transferred between Conflux eSpace (testnet) and Ethereum (Sepolia).
 
+Instructions: 
+
+npx hardhat lz:deploy
+npx hardhat lz:oapp:config:init --contract-name MyOFT --oapp-config testnet.layerzero.config.ts
+$ npx hardhat lz:oapp:wire --oapp-config testnet.layerzero.config.ts
+
+
+
 
 <p align="center">
   <a href="https://layerzero.network" style="color: #a77dff">Homepage</a> | <a href="https://docs.layerzero.network/" style="color: #a77dff">Docs</a> | <a href="https://layerzero.network/developers" style="color: #a77dff">Developers</a>

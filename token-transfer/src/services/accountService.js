@@ -1,125 +1,155 @@
 import { ethers } from 'ethers';
 
-// accountService is the Web3Provider for connecting to Metamask through ethers.js
+// Define network parameters at the top of the file
+const networkParams = {
+  sepolia: {
+    chainId: '0xaa36a7', // 11155111 in hex
+    chainName: 'Sepolia Testnet',
+    rpcUrls: ['https://rpc.sepolia.org'],
+    nativeCurrency: { name: 'Sepolia ETH', symbol: 'ETH', decimals: 18 },
+    blockExplorerUrls: ['https://sepolia.etherscan.io'],
+  },
+  confluxTestnet: {
+    chainId: '0x47', // 71 in hex
+    chainName: 'Conflux EVM Testnet',
+    rpcUrls: ['https://evmtestnet.confluxrpc.com'],
+    nativeCurrency: { name: 'CFX', symbol: 'CFX', decimals: 18 },
+    blockExplorerUrls: ['https://evmtestnet.confluxscan.net'],
+  },
+};
 
-const getProvider = async (rpcUrl) => {
+// Function to map chainId to network key
+const getNetworkKeyByChainId = (chainId) => {
+  // Convert chainId to a hex string and ensure it's in lower case
+  const chainIdHex = ethers.toBeHex(chainId).toLowerCase(); // Use ethers.toBeHex to handle conversion
+  return Object.keys(networkParams).find(
+    (key) => networkParams[key].chainId === chainIdHex
+  );
+};
+
+const getProvider = async () => {
   try {
+    if (!window.ethereum) throw new Error('MetaMask is not installed');
     const provider = new ethers.BrowserProvider(window.ethereum);
-    console.log("Provider created:", provider);
+    console.log('Provider created:', provider);
     return provider;
   } catch (error) {
-    console.error("Failed to create provider:", error);
+    console.error('Failed to create provider:', error);
     return null;
   }
 };
 
-const getWalletAddress = async (signer) => signer?.getAddress();
+const getWalletAddress = async (signer) => {
+  try {
+    return await signer.getAddress();
+  } catch (error) {
+    console.error('Failed to get wallet address:', error);
+    return null;
+  }
+};
 
 const getSigner = async (provider) => {
-    if (!provider) return null;
-    console.log(provider);
-  
-    try {
-      if (window.ethereum) {
-        const accounts = await window.ethereum.request({ method: 'eth_requestAccounts' });
-        console.log("Accounts:", accounts);
-        console.log(accounts.length);
-  
-        if (accounts.length > 0) {
-            console.log(accounts.length > 0);
-            const signer = await provider.getSigner();
-            console.log(signer);
-          return signer;
-        }
-      } else {
-        console.error("MetaMask is not installed");
-      }
-    } catch (error) {
-      console.error("Failed to request accounts:", error);
-    }
-  
+  if (!provider) return null;
+  try {
+    const signer = await provider.getSigner();
+    console.log('Signer:', signer);
+    return signer;
+  } catch (error) {
+    console.error('Failed to get signer:', error);
     return null;
-  };
+  }
+};
 
 const checkNetwork = async (provider, chainId) => {
   if (!provider) return false;
-
-  const network = await provider.getNetwork();
-  console.log("Current network:", network);
-  console.log(network.chainId);
-  console.log(chainId);
-  return network.chainId.toString() === chainId.toString();
+  try {
+    const network = await provider.getNetwork();
+    return network.chainId.toString() === chainId.toString();
+  } catch (error) {
+    console.error('Failed to check network:', error);
+    return false;
+  }
 };
 
-const switchToChain = async (provider, chainId) => {
-    console.log(chainId);
+const switchToChain = async (provider, chain) => {
+  const params = networkParams[chain];
+  if (!params) {
+    console.error('Unsupported chain or networkParams is undefined');
+    return false;
+  }
+
   try {
-    await provider.send("wallet_switchEthereumChain", [
-      { chainId: ethers.hexlify(chainId) },
-    ]);
-    console.log("Switched to chain:", chainId);
-  } catch (error) {
-    if (error.code === 4902) {
-      await provider.send("wallet_addEthereumChain", [
-        {
-          chainId: ethers.hexlify(chainId),
-          rpcUrls: [provider.connection.url],
-          chainName: "Custom Network", 
-        },
-      ]);
-      console.log("Added and switched to chain:", chainId);
+    // Attempt to switch to the network
+    await provider.send('wallet_switchEthereumChain', [{ chainId: params.chainId }]);
+    console.log('Switched to chain:', params.chainId);
+    return true;
+  } catch (switchError) {
+    // Check if the error is due to the chain not being added to MetaMask
+    if (switchError.code === 4902) {
+      try {
+        // Use params to add the new chain
+        await provider.send('wallet_addEthereumChain', [
+          {
+            chainId: params.chainId,
+            rpcUrls: params.rpcUrls,
+            chainName: params.chainName,
+            nativeCurrency: params.nativeCurrency,
+            blockExplorerUrls: params.blockExplorerUrls,
+          },
+        ]);
+        console.log('Added and switched to chain:', params.chainId);
+        return true;
+      } catch (addError) {
+        console.error('Failed to add new chain:', addError);
+        return false;
+      }
     } else {
-      console.log(
-        "Not currently on the correct network. Please switch to the correct network."
-      );
+      console.error('Failed to switch network:', switchError);
+      return false;
     }
   }
 };
 
-const connectWallet = async (chainId, rpcUrl) => {
-    console.log(chainId, rpcUrl);
+const connectWallet = async (chainOrId) => {
   try {
-    const provider = await getProvider(rpcUrl);
-    console.log("Provider:", provider);
-
-    if (!provider) {
-      console.error("No provider available.");
-      return null;
-    }
+    const provider = await getProvider();
+    if (!provider) return null;
 
     const signer = await getSigner(provider);
-    console.log("Signer:", signer);
-
-    if (!signer) {
-      console.error("No signer available.");
-      return null;
-    }
+    if (!signer) return null;
 
     const walletAddress = await getWalletAddress(signer);
-    if (!walletAddress) {
-      console.error("No wallet address available.");
+    if (!walletAddress) return null;
+
+    // Determine chain key or get key by chainId
+    const chainKey = typeof chainOrId === 'string' ? chainOrId : getNetworkKeyByChainId(chainOrId);
+
+    const params = networkParams[chainKey];
+    if (!params) {
+      console.error(`Network parameters for ${chainKey || chainOrId} not found.`);
       return null;
     }
 
-    if (!(await checkNetwork(provider, chainId))) {
-      await switchToChain(provider, chainId);
-      if (!(await checkNetwork(provider, chainId))) {
-        console.error("Failed to switch to the correct network.");
+    const chainId = parseInt(params.chainId, 16); // Convert hex string to number
+
+    const onCorrectNetwork = await checkNetwork(provider, chainId);
+    if (!onCorrectNetwork) {
+      const switched = await switchToChain(provider, chainKey); // Pass the chain key
+      if (!switched) {
+        console.error('Failed to switch to the correct network.');
         return null;
       }
     }
 
     return { provider, signer, walletAddress };
   } catch (error) {
-    console.error("Error while connecting to wallet:", error.message);
+    console.error('Error while connecting to wallet:', error);
     return null;
   }
 };
 
-
 const accountService = {
-    connectWallet,
-  };
-  
+  connectWallet,
+};
 
 export default accountService;

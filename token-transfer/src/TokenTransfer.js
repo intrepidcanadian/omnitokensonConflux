@@ -6,21 +6,21 @@ import contractABI from './abis/MyOFT.sol/MyOFT.json';
 import { EndpointId } from '@layerzerolabs/lz-definitions';
 import accountService from './services/accountService';
 import { getBytes, zeroPadBytes } from 'ethers';
-import { Options } from '@layerzerolabs/lz-v2-utilities';
+import { Options, addressToBytes32 } from '@layerzerolabs/lz-v2-utilities';
 import './TokenTransfer.css';
 
 const TokenTransfer = () => {
   const [amount, setAmount] = useState('');
   const [recipient, setRecipient] = useState('');
   const [status, setStatus] = useState('');
-  const [sourceChain, setSourceChain] = useState('sepolia');
-  const [destinationChain, setDestinationChain] = useState('confluxTestnet');
-  const [chain, setChain] = useState('');
+  const [sourceChain, setSourceChain] = useState('confluxTestnet');
+  const [destinationChain, setDestinationChain] = useState('sepolia');
+  const [chainNumber, setChainNumber] = useState(''); // renamed for consistency
   const [tokenName, setTokenName] = useState('');
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenBalance, setTokenBalance] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
-  const [signer, setSigner] = useState('');
+  const [signer, setSigner] = useState(null); // use null as initial state
   const [provider, setProvider] = useState(null);
 
   const networkParams = {
@@ -40,10 +40,18 @@ const TokenTransfer = () => {
     },
   };
 
+  // Function to switch the network in MetaMask
   const switchNetwork = async (chain) => {
     const params = networkParams[chain];
     if (!params) {
-      console.error('Unsupported chain');
+      console.error('Unsupported chain or networkParams is undefined');
+      return;
+    }
+
+    // Check if already on the correct network
+    const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
+    if (currentChainId === params.chainId) {
+      console.log(`Already on the ${params.chainName} network.`);
       return;
     }
 
@@ -54,13 +62,14 @@ const TokenTransfer = () => {
       });
       console.log(`Switched to ${params.chainName}`);
     } catch (switchError) {
-      // This error code indicates that the chain has not been added to MetaMask.
+      // Handle the case where the chain is not added to MetaMask
       if (switchError.code === 4902) {
         try {
           await window.ethereum.request({
             method: 'wallet_addEthereumChain',
             params: [params],
           });
+          console.log(`Added and switched to ${params.chainName}`);
         } catch (addError) {
           console.error('Failed to add the network to MetaMask:', addError);
         }
@@ -72,8 +81,9 @@ const TokenTransfer = () => {
 
   const updateProviderAndSigner = async (chain) => {
     const { chainId, rpcUrl } = getChainParams(chain);
+    if (!chainId || !rpcUrl) return;
     try {
-      const { provider, signer, walletAddress } = await accountService.connectWallet(chainId, rpcUrl);
+      const { provider, signer, walletAddress } = await accountService.connectWallet(chain);
       setProvider(provider);
       setSigner(signer);
       setWalletAddress(walletAddress);
@@ -86,8 +96,11 @@ const TokenTransfer = () => {
     const newSourceChain = e.target.value;
     setSourceChain(newSourceChain);
     setDestinationChain(newSourceChain === 'sepolia' ? 'confluxTestnet' : 'sepolia');
+  
+    console.log('New Source Chain:', newSourceChain); // Check value of newSourceChain
+    console.log('Calling switchNetwork with:', newSourceChain); // Debugging output
     await switchNetwork(newSourceChain);
-    await updateProviderAndSigner(newSourceChain); // Update provider and signer after switching network
+    await updateProviderAndSigner(newSourceChain);
     fetchTokenDetails(newSourceChain);
   };
 
@@ -103,24 +116,28 @@ const TokenTransfer = () => {
   const fetchTokenDetails = async (chain) => {
     try {
       const { chainId, rpcUrl } = getChainParams(chain);
-      const { provider, signer, walletAddress } = await accountService.connectWallet(chainId, rpcUrl);
-      console.log(provider, signer, walletAddress);
-      if (!provider || !signer) {
-        throw new Error('Failed to connect wallet');
+      if (!chainId || !rpcUrl) return;
+  
+      const walletData = await accountService.connectWallet(chain);
+      if (!walletData) {
+        console.error('Failed to connect wallet');
+        return;
       }
-
-      let sourceContract;
-      if (chain === 'sepolia') {
-        sourceContract = new ethers.Contract(OFTContracts.sepolia.contractAddress, contractABI.abi, signer);
-      } else if (chain === 'confluxTestnet') {
-        sourceContract = new ethers.Contract(OFTContracts.confluxTestnet.contractAddress, contractABI.abi, signer);
-      }
-
-      const name = await sourceContract.name();
-      const symbol = await sourceContract.symbol();
-      const balance = await sourceContract.balanceOf(walletAddress);
-
-      setChain(chainId);
+  
+      const { provider, signer, walletAddress } = walletData;
+      const sourceContract = new ethers.Contract(
+        chain === 'sepolia' ? OFTContracts.sepolia.contractAddress : OFTContracts.confluxTestnet.contractAddress,
+        contractABI.abi,
+        signer
+      );
+  
+      const [name, symbol, balance] = await Promise.all([
+        sourceContract.name(),
+        sourceContract.symbol(),
+        sourceContract.balanceOf(walletAddress),
+      ]);
+  
+      setChainNumber(chainId);
       setTokenBalance(ethers.formatEther(balance));
       setTokenName(name);
       setTokenSymbol(symbol);
@@ -149,28 +166,35 @@ const TokenTransfer = () => {
     checkWalletConnection();
 
     // Listen for network changes
-    window.ethereum.on('chainChanged', (chainId) => {
-      // Convert chainId to a decimal number
+    const handleChainChanged = async (chainId) => {
       const networkName = Object.keys(networkParams).find(
         (key) => networkParams[key].chainId === chainId
       );
       if (networkName) {
         setSourceChain(networkName);
         setDestinationChain(networkName === 'sepolia' ? 'confluxTestnet' : 'sepolia');
-        updateProviderAndSigner(networkName); // Update provider and signer for the new network
+        await updateProviderAndSigner(networkName);
         fetchTokenDetails(networkName);
       }
-    });
-  }, []);
+    };
+
+    window.ethereum.on('chainChanged', handleChainChanged);
+
+    return () => {
+      window.ethereum.removeListener('chainChanged', handleChainChanged);
+    };
+  }, [sourceChain]);
 
   useEffect(() => {
     const initialize = async () => {
       const { chainId, rpcUrl } = getChainParams(sourceChain);
-      const walletData = await accountService.connectWallet(chainId, rpcUrl);
-      if (walletData) {
-        setSigner(walletData.signer);
-        setProvider(walletData.provider);
-        fetchTokenDetails(sourceChain);
+      if (chainId && rpcUrl) {
+        const walletData = await accountService.connectWallet(sourceChain);
+        if (walletData) {
+          setSigner(walletData.signer);
+          setProvider(walletData.provider);
+          fetchTokenDetails(sourceChain);
+        }
       }
     };
 
@@ -191,26 +215,20 @@ const TokenTransfer = () => {
         transition: Bounce,
       });
 
-      const { signer } = await accountService.connectWallet(11155111, 'https://rpc.sepolia.org'); // Use Sepolia's chainId and RPC URL
+      // Ensure you are connected to the correct source chain before initiating the transfer
+      await switchNetwork(sourceChain);
+      
+      const { provider, signer, walletAddress } = await accountService.connectWallet(sourceChain);
+      const sourceContract = new ethers.Contract(
+        sourceChain === 'sepolia' ? OFTContracts.sepolia.contractAddress : OFTContracts.confluxTestnet.contractAddress,
+        contractABI.abi,
+        signer
+      );
 
-      let sourceContract, dstChainId;
-
-      if (sourceChain === 'sepolia') {
-        sourceContract = new ethers.Contract(OFTContracts.sepolia.contractAddress, contractABI.abi, signer);
-        dstChainId = EndpointId.CONFLUX_V2_TESTNET;
-      } else if (sourceChain === 'confluxTestnet') {
-        sourceContract = new ethers.Contract(OFTContracts.confluxTestnet.contractAddress, contractABI.abi, signer);
-        dstChainId = EndpointId.SEPOLIA_V2_TESTNET;
-        console.log(dstChainId);
-      }
-
-      if (!dstChainId) {
-        throw new Error('Destination chain ID is not defined');
-      }
+      const dstChainId = sourceChain === 'sepolia' ? EndpointId.CONFLUX_V2_TESTNET : EndpointId.SEPOLIA_V2_TESTNET;
 
       const amountInWei = ethers.parseEther(amount);
-      const recipientBytes32 = zeroPadBytes(getBytes(recipient), 32);
-
+      const recipientBytes32 = addressToBytes32(recipient);
       const options = Options.newOptions().addExecutorLzReceiveOption(500000, 0).toHex().toString();
 
       const sendParam = [
@@ -223,19 +241,11 @@ const TokenTransfer = () => {
         '0x',
       ];
 
-      console.log('sendParam:', sendParam);
-
-      if (!sourceContract.quoteSend) {
-        throw new Error('quoteSend method not supported by the contract');
-      }
-
       const [nativeFee] = await sourceContract.quoteSend(sendParam, false);
 
-      console.log('nativeFee:', nativeFee);
-
       const tx = await sourceContract.send(sendParam, [nativeFee, 0], signer.getAddress(), { value: nativeFee });
-
       await tx.wait();
+
       toast('Transfer successful!', {
         position: 'top-right',
         autoClose: 5000,
@@ -247,6 +257,7 @@ const TokenTransfer = () => {
         theme: 'light',
         transition: Bounce,
       });
+
       await fetchTokenDetails(sourceChain);
     } catch (error) {
       console.error('Error during transfer:', error);
@@ -275,17 +286,7 @@ const TokenTransfer = () => {
 
   return (
     <div className="container">
-      <nav
-        style={{
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between',
-          padding: '1rem',
-          margin: '1rem',
-          backgroundColor: '#f8f9fa',
-          borderBottom: '1px solid #e0e0e0',
-        }}
-      >
+      <nav className="nav">
         <h1 className="title">Conflux Testnet-Sepolia LZ Bridge</h1>
         <button onClick={connectToMetaMask}>
           {walletAddress ? `Connected: ${condensedAddress(walletAddress)}` : 'Connect to MetaMask'}
@@ -305,14 +306,16 @@ const TokenTransfer = () => {
           <p className="network-label">Sepolia Network</p>
         </div>
       </div>
+
       <div className="circle-container">
-  <div className="circle-content">
-    <p className="token-info-item"><strong>Chain:</strong> {sourceChain || 'N/A'}</p>
-    <p className="token-info-item"><strong>Token Name:</strong> {tokenName || 'N/A'}</p>
-    <p className="token-info-item"><strong>Token Symbol:</strong> {tokenSymbol || 'N/A'}</p>
-    <p className="token-info-item"><strong>Token Balance:</strong> {tokenBalance || 'N/A'}</p>
-  </div>
-</div>
+        <div className="circle-content">
+          <p className="token-info-item"><strong>Chain:</strong> {sourceChain || 'N/A'}</p>
+          <p className="token-info-item"><strong>Token Name:</strong> {tokenName || 'N/A'}</p>
+          <p className="token-info-item"><strong>Token Symbol:</strong> {tokenSymbol || 'N/A'}</p>
+          <p className="token-info-item"><strong>Token Balance:</strong> {tokenBalance || 'N/A'}</p>
+        </div>
+      </div>
+
       <div className="card">
         <div className="card-content">
           <h2>Omnichain Fungible Token Bridge Using LayerZero</h2>

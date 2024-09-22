@@ -50,7 +50,7 @@ const deploy: DeployFunction = async (hre) => {
         from: deployer,
         args: [
             'ETHSingapore', // name
-            'SIG', // symbol
+            'TNY', // symbol
             // endpointV2Deployment.address, // LayerZero's EndpointV2 address 
             // endpointAddress,
             endpointAddress,

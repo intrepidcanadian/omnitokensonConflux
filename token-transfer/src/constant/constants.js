@@ -1,26 +1,17 @@
 export const OFTContracts = {
     sepolia: {
         name: "Sepolia Testnet",
-        contractAddress: "0x76Bef0B0F829F85Ad38d1235D8c7Bb1af7EA00eD"
+        contractAddress: "0xec33d3b63515682a93Da3B73d733F58ed6BE43ae"
     },
     confluxTestnet: {
         name: "Conflux Testnet",
-        contractAddress: "0x7E0134F8950723739f7B6BdAF9A509Bc0CcD8216"
+        contractAddress: "0x768bD9F5fa67a2F61aE9f2ceB2E812Fc07884d14"
     }
 }
-
-// Using Endpoint Address: 0x6EDCE65403992e310A62460808c4b910D972f10f
-// this is the endpoint address 0x6EDCE65403992e310A62460808c4b910D972f10f
-// Network: conflux-testnet
-// Deployer: 0x8DabF51501196a7700c97616bD82791cF31Ac685
-// 40211
-// Using Endpoint Address: 0x6EDCE65403992e310A62460808c4b910D972f10f
-// this is the endpoint address 0x6EDCE65403992e310A62460808c4b910D972f10f
-// Deployed contract: MyOFT, network: conflux-testnet, address: 0x7E0134F8950723739f7B6BdAF9A509Bc0CcD8216, endpoint: 0x6EDCE65403992e310A62460808c4b910D972f10f
+// Deployed contract: MyOFT, network: sepolia-testnet, address: 0x141E11f9320642918c239c515344f83a2Aa1E2f6, endpoint: 0x6EDCE65403992e310A62460808c4b910D972f10f
+// Deployed contract: MyOFT, network: conflux-testnet, address: 0x94B7C8267B3ceBC253d57B0E9Ed23cc7e2772e73, endpoint: 0x6EDCE65403992e310A62460808c4b910D972f10f
 // Minted 1000000000000000000000 tokens to 0x8DabF51501196a7700c97616bD82791cF31Ac685
-// Deployed contract: MyOFT, network: sepolia-testnet, address: 0x76Bef0B0F829F85Ad38d1235D8c7Bb1af7EA00eD, endpoint: 0x6EDCE65403992e310A62460808c4b910D972f10f
 // Minted 1000000000000000000000 tokens to 0x8DabF51501196a7700c97616bD82791cF31Ac685
-
 
 export const RPCNodes = {
     confluxTestnet: 'https://evmtestnet.confluxrpc.com',
