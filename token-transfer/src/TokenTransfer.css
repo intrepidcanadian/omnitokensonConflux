@@ -4,8 +4,50 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    height: 100vh;
-    background-color: #f0f0f0;
+    background-color: peachpuff;
+    margin: 0rem;
+    padding: 0rem;
+  }
+
+  .connect-button {
+    background-color: #4CAF50; 
+    border: none; 
+    color: white;
+    padding: 15px 32px; 
+    text-align: center; 
+    text-decoration: none; 
+    display: inline-block;
+    font-size: 16px;
+    margin: 4px 2px; 
+    cursor: pointer;
+    transition: background-color 0.3s ease; 
+    border-radius: 50px;
+  }
+  
+  .connect-button:hover {
+    background-color: #45a049; /* Darker green on hover */
+  }
+
+.nav {
+  background-color: #007bff; 
+  display: flex; 
+  width: 100%;
+  justify-content: space-between;
+
+  }
+
+  .nav h1 {
+    color: white; 
+    text-decoration: none; 
+    font-size: 1.2rem; 
+    transition: color 0.3s ease; 
+    margin-left: 1rem;
+    align-items: center;
+    justify-content: center;  
+  }
+  
+  .nav h1:hover {
+    color: #ffdd57;
   }
   
   .title {
@@ -17,7 +59,7 @@
   .network-section {
     display: flex;
     align-items: center;
-    justify-content: center; /* Center the network boxes */
+    justify-content: center; 
     margin-bottom: 20px;
     position: relative;
   }

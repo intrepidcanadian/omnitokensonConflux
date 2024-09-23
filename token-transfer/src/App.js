@@ -3,6 +3,7 @@ import React from 'react';
 import TokenTransfer from './TokenTransfer';
 import { ToastContainer } from 'react-toastify'; // Import the ToastContainer
 import 'react-toastify/dist/ReactToastify.css';  
+import './App.js'
 
 
 function App() {

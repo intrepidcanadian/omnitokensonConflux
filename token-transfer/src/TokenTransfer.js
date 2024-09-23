@@ -20,19 +20,19 @@ const TokenTransfer = () => {
   const [tokenSymbol, setTokenSymbol] = useState('');
   const [tokenBalance, setTokenBalance] = useState('');
   const [walletAddress, setWalletAddress] = useState('');
-  const [signer, setSigner] = useState(null); // use null as initial state
+  const [signer, setSigner] = useState(null); 
   const [provider, setProvider] = useState(null);
 
   const networkParams = {
     sepolia: {
-      chainId: '0xaa36a7', // 11155111 in hex
+      chainId: '0xaa36a7', 
       chainName: 'Sepolia Testnet',
       rpcUrls: ['https://rpc.sepolia.org'],
       nativeCurrency: { name: 'Sepolia ETH', symbol: 'ETH', decimals: 18 },
       blockExplorerUrls: ['https://sepolia.etherscan.io'],
     },
     confluxTestnet: {
-      chainId: '0x47', // 71 in hex
+      chainId: '0x47', 
       chainName: 'Conflux EVM Testnet',
       rpcUrls: ['https://evmtestnet.confluxrpc.com'],
       nativeCurrency: { name: 'CFX', symbol: 'CFX', decimals: 18 },
@@ -40,7 +40,6 @@ const TokenTransfer = () => {
     },
   };
 
-  // Function to switch the network in MetaMask
   const switchNetwork = async (chain) => {
     const params = networkParams[chain];
     if (!params) {
@@ -48,7 +47,7 @@ const TokenTransfer = () => {
       return;
     }
 
-    // Check if already on the correct network
+
     const currentChainId = await window.ethereum.request({ method: 'eth_chainId' });
     if (currentChainId === params.chainId) {
       console.log(`Already on the ${params.chainName} network.`);
@@ -97,8 +96,8 @@ const TokenTransfer = () => {
     setSourceChain(newSourceChain);
     setDestinationChain(newSourceChain === 'sepolia' ? 'confluxTestnet' : 'sepolia');
   
-    console.log('New Source Chain:', newSourceChain); // Check value of newSourceChain
-    console.log('Calling switchNetwork with:', newSourceChain); // Debugging output
+    console.log('New Source Chain:', newSourceChain); 
+    console.log('Calling switchNetwork with:', newSourceChain); 
     await switchNetwork(newSourceChain);
     await updateProviderAndSigner(newSourceChain);
     fetchTokenDetails(newSourceChain);
@@ -286,12 +285,13 @@ const TokenTransfer = () => {
 
   return (
     <div className="container">
-      <nav className="nav">
+      <div className="nav">
         <h1 className="title">Conflux Testnet-Sepolia LZ Bridge</h1>
-        <button onClick={connectToMetaMask}>
+        <button className = "connnect-button" onClick={connectToMetaMask}>
           {walletAddress ? `Connected: ${condensedAddress(walletAddress)}` : 'Connect to MetaMask'}
         </button>
-      </nav>
+      </div>
+
 
       <div className="network-section">
         <div className="network-box">
